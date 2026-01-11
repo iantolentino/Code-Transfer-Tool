@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Text to URL</title>
+</head>
+<body>
+
+<textarea id="input" rows="10" cols="80" placeholder="Paste text here"></textarea>
+<br><br>
+
+<button onclick="generateLink()">Generate URL</button>
+<button onclick="copyText()">Copy Text</button>
+
+<p>
+  Shareable URL:<br>
+  <input id="link" type="text" style="width:100%;">
+</p>
+
+<script>
+  const textarea = document.getElementById('input');
+  const linkInput = document.getElementById('link');
+
+  function generateLink() {
+    const encoded = btoa(unescape(encodeURIComponent(textarea.value)));
+    const url = `${location.origin}${location.pathname}#${encoded}`;
+    linkInput.value = url;
+  }
+
+  function copyText() {
+    navigator.clipboard.writeText(textarea.value);
+  }
+
+  // Load text from URL on page open
+  if (location.hash.length > 1) {
+    try {
+      const decoded = decodeURIComponent(escape(atob(location.hash.slice(1))));
+      textarea.value = decoded;
+    } catch (e) {
+      console.error('Invalid URL data');
+    }
+  }
+</script>
+
+</body>
+</html>
