@@ -1,281 +1,127 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>E-Clip</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50%' x='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial, sans-serif' font-size='40' fill='black'>CTT</text></svg>">
+<meta charset="UTF-8">
+<title>E-Clip</title>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #1e1e1e;
-      color: #d4d4d4;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      padding: 10px;
-    }
+<style>
+body {
+  margin: 0;
+  padding: 10px;
+  font-family: Segoe UI, sans-serif;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-    h1 {
-      margin: 20px 0 10px;
-      color: #61dafb;
-      text-align: center;
-    }
+h1 { color: #61dafb; }
 
-    textarea {
-      width: 100%;
-      max-width: 1000px;
-      height: 300px;
-      background-color: #252526;
-      color: #d4d4d4;
-      border: 1px solid #333;
-      padding: 10px;
-      font-family: "Fira Code", monospace;
-      font-size: 14px;
-      resize: vertical;
-      border-radius: 5px;
-      outline: none;
-    }
+textarea {
+  width: 100%;
+  max-width: 1000px;
+  height: 300px;
+  background: #252526;
+  color: #d4d4d4;
+  border: 1px solid #333;
+  border-radius: 5px;
+  padding: 10px;
+  font-family: monospace;
+}
 
-    textarea:focus {
-      border-color: #61dafb;
-      box-shadow: 0 0 5px #61dafb;
-    }
+button {
+  margin: 5px;
+  padding: 10px 15px;
+  background: #0e639c;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
 
-    .button-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin: 10px 0;
-    }
+button:hover { background: #1177bb; }
 
-    button {
-      margin: 5px;
-      padding: 10px 20px;
-      background-color: #0e639c;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    button:hover {
-      background-color: #1177bb;
-    }
-
-    #shortLink {
-      width: 100%;
-      max-width: 1000px;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #333;
-      background-color: #252526;
-      color: #61dafb;
-      font-family: monospace;
-      cursor: pointer;
-    }
-
-    #lineCount {
-      width: 100%;
-      max-width: 1000px;
-      text-align: right;
-      font-size: 14px;
-      color: #aaa;
-      margin-top: 5px;
-    }
-
-    .stats {
-      width: 100%;
-      max-width: 1000px;
-      font-size: 12px;
-      color: #888;
-      text-align: right;
-      margin-top: 5px;
-    }
-
-    .stat-item {
-      margin-right: 20px;
-    }
-
-    .stat-value {
-      color: #61dafb;
-      font-weight: bold;
-    }
-
-    .timer {
-      padding: 3px 8px;
-      background-color: #0e639c;
-      border-radius: 3px;
-      font-size: 11px;
-      margin-left: 5px;
-    }
-
-    .timer.expired {
-      background-color: #ef4444;
-    }
-
-    @media (max-width: 600px) {
-      button {
-        width: 100%;
-      }
-    }
-  </style>
+#link {
+  width: 100%;
+  max-width: 1000px;
+  margin-top: 10px;
+  padding: 10px;
+  background: #252526;
+  border: 1px solid #333;
+  color: #61dafb;
+}
+</style>
 </head>
 
 <body>
 
 <h1>E-Clip</h1>
 
-<textarea id="input" placeholder="Paste your code/file here"></textarea>
-<div id="lineCount">Lines: 0 | Size: 0 KB</div>
+<textarea id="input" placeholder="Paste text here"></textarea>
 
-<div class="button-container">
-  <button onclick="generateShortLink()">Generate Short URL (5 mins)</button>
-  <button onclick="copyText()">Copy Code</button>
+<div>
+  <button onclick="generate()">Generate Link (5 min)</button>
+  <button onclick="copyText()">Copy Text</button>
   <button onclick="copyLink()">Copy Link</button>
-  <button onclick="clearStorage()">Clear Storage</button>
 </div>
 
-<p>Shareable URL:</p>
-<input id="shortLink" type="text" readonly onclick="this.select()">
-
-<div class="stats">
-  <span class="stat-item">Original Size: <span class="stat-value" id="fileSize">0</span> KB</span>
-  <span class="stat-item">Stored URLs: <span class="stat-value" id="storedCount">0</span></span>
-  <span id="timerDisplay"></span>
-</div>
+<input id="link" readonly onclick="this.select()">
 
 <script>
-  const textarea = document.getElementById("input");
-  const shortLinkInput = document.getElementById("shortLink");
-  const lineCountDiv = document.getElementById("lineCount");
-  const fileSizeSpan = document.getElementById("fileSize");
-  const storedCountSpan = document.getElementById("storedCount");
-  const timerDisplay = document.getElementById("timerDisplay");
+const EXPIRY_MS = 5 * 60 * 1000;
 
-  const STORAGE_KEY = "ctt_transfers";
-  const EXPIRY_TIME = 5 * 60 * 1000;
+function encode(data) {
+  return btoa(unescape(encodeURIComponent(data)));
+}
 
-  function generateShortId() {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
-  }
+function decode(data) {
+  return decodeURIComponent(escape(atob(data)));
+}
 
-  function getTransfers() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-  }
+function generate() {
+  if (!input.value) return;
 
-  function saveTransfers(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    updateStorageCount();
-  }
+  const payload = {
+    t: Date.now(),
+    d: encode(input.value)
+  };
 
-  function cleanExpiredTransfers() {
-    const now = Date.now();
-    const transfers = getTransfers();
-    let changed = false;
+  const hash = btoa(JSON.stringify(payload));
+  link.value = location.origin + location.pathname + "#data=" + hash;
+}
 
-    for (const id in transfers) {
-      if (now > transfers[id].expires) {
-        delete transfers[id];
-        changed = true;
-      }
-    }
-    if (changed) saveTransfers(transfers);
-  }
+function loadFromUrl() {
+  if (!location.hash.startsWith("#data=")) return;
 
-  function updateStorageCount() {
-    cleanExpiredTransfers();
-    storedCountSpan.textContent = Object.keys(getTransfers()).length;
-  }
+  try {
+    const raw = atob(location.hash.replace("#data=", ""));
+    const payload = JSON.parse(raw);
 
-  function updateLineCount() {
-    const lines = textarea.value.split(/\r\n|\r|\n/).length;
-    const sizeKB = (textarea.value.length / 1024).toFixed(2);
-    lineCountDiv.textContent = `Lines: ${lines} | Size: ${sizeKB} KB`;
-    fileSizeSpan.textContent = sizeKB;
-  }
-
-  textarea.addEventListener("input", updateLineCount);
-
-  function generateShortLink() {
-    if (!textarea.value) return;
-
-    cleanExpiredTransfers();
-    const transfers = getTransfers();
-
-    let id;
-    do {
-      id = generateShortId();
-    } while (transfers[id]);
-
-    transfers[id] = {
-      data: textarea.value,
-      expires: Date.now() + EXPIRY_TIME
-    };
-
-    saveTransfers(transfers);
-
-    shortLinkInput.value = `${location.origin}${location.pathname}?id=${id}`;
-    startTimer(transfers[id].expires);
-  }
-
-  function startTimer(expiry) {
-    function tick() {
-      const remaining = expiry - Date.now();
-      if (remaining <= 0) {
-        timerDisplay.innerHTML = `<span class="timer expired">EXPIRED</span>`;
-        return;
-      }
-      const m = Math.floor(remaining / 60000);
-      const s = Math.floor((remaining % 60000) / 1000);
-      timerDisplay.innerHTML = `<span class="timer">${m}:${s.toString().padStart(2, "0")}</span>`;
-      setTimeout(tick, 1000);
-    }
-    tick();
-  }
-
-  function copyText() {
-    navigator.clipboard.writeText(textarea.value);
-    alert("Code copied!");
-  }
-
-  function copyLink() {
-    if (!shortLinkInput.value) return alert("Generate a link first");
-    navigator.clipboard.writeText(shortLinkInput.value);
-    alert("Link copied!");
-  }
-
-  function clearStorage() {
-    if (confirm("Clear all stored transfers?")) {
-      localStorage.removeItem(STORAGE_KEY);
-      updateStorageCount();
-    }
-  }
-
-  function loadFromShortUrl() {
-    const id = new URLSearchParams(location.search).get("id");
-    if (!id) return;
-
-    cleanExpiredTransfers();
-    const transfers = getTransfers();
-
-    if (!transfers[id]) {
-      alert("❌ Link not found or expired!");
+    if (Date.now() - payload.t > EXPIRY_MS) {
+      alert("❌ Link expired");
       return;
     }
 
-    textarea.value = transfers[id].data;
-    updateLineCount();
-    startTimer(transfers[id].expires);
-    alert("✅ File loaded!");
+    input.value = decode(payload.d);
+    alert("✅ File loaded");
+  } catch {
+    alert("❌ Invalid or corrupted link");
   }
+}
 
-  updateLineCount();
-  updateStorageCount();
-  loadFromShortUrl();
+function copyText() {
+  navigator.clipboard.writeText(input.value);
+  alert("Copied");
+}
+
+function copyLink() {
+  if (!link.value) return alert("Generate link first");
+  navigator.clipboard.writeText(link.value);
+  alert("Link copied");
+}
+
+loadFromUrl();
 </script>
 
 </body>
