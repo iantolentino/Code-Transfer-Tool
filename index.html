@@ -4,12 +4,10 @@
   <meta charset="UTF-8">
   <title>Code Transfer Tool</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50%' x='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial, sans-serif' font-size='40' fill='black'>CTT</text></svg>">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
   <style>
-    /* Base styling */
     body {
       margin: 0;
-      padding: 0;
+      padding:  0;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       background-color: #1e1e1e;
       color: #d4d4d4;
@@ -21,7 +19,7 @@
     }
 
     h1 {
-      margin: 20px 0 10px 0;
+      margin:  20px 0 10px 0;
       color: #61dafb;
       text-align: center;
     }
@@ -46,8 +44,7 @@
       box-shadow: 0 0 5px #61dafb;
     }
 
-    /* Buttons styling */
-    .button-container {
+    . button-container {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
@@ -70,22 +67,29 @@
       background-color: #1177bb;
     }
 
-    /* Link input styling */
-    #link {
+    #shortLink {
       width: 100%;
       max-width: 1000px;
-      padding: 5px;
+      padding: 10px;
       border-radius: 5px;
       border: 1px solid #333;
       background-color: #252526;
-      color: #d4d4d4;
+      color: #61dafb;
       margin-top: 5px;
+      font-family: 'Fira Code', monospace;
+      font-size:  14px;
+      word-break: break-all;
+      cursor: pointer;
+    }
+
+    #shortLink:hover {
+      background-color: #333;
     }
 
     #lineCount {
-      margin-top: 5px;
-      font-size: 14px;
-      color: #aaaaaa;
+      margin-top:  5px;
+      font-size:  14px;
+      color:  #aaaaaa;
       width: 100%;
       max-width: 1000px;
       text-align: right;
@@ -98,7 +102,42 @@
       margin-top: 10px;
     }
 
-    /* Responsive tweaks */
+    .stats {
+      width: 100%;
+      max-width: 1000px;
+      font-size: 12px;
+      color: #888;
+      text-align: right;
+      margin-top: 5px;
+    }
+
+    . stat-item {
+      display: inline-block;
+      margin-right: 20px;
+    }
+
+    .stat-label {
+      color: #666;
+    }
+
+    .stat-value {
+      color: #61dafb;
+      font-weight: bold;
+    }
+
+    .timer {
+      display: inline-block;
+      margin-left: 10px;
+      padding: 3px 8px;
+      background-color: #0e639c;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+
+    .timer. expired {
+      background-color: #ef4444;
+    }
+
     @media (max-width: 600px) {
       button {
         width: 100%;
@@ -110,69 +149,209 @@
 
 <h1>Code Transfer Tool</h1>
 
-<textarea id="input" placeholder="Paste your code here"></textarea>
-<div id="lineCount">Lines: 0</div>
+<textarea id="input" placeholder="Paste your code/file here"></textarea>
+<div id="lineCount">Lines: 0 | Size: 0 KB</div>
 
 <div class="button-container">
-  <button onclick="generateLink()">Generate URL</button>
+  <button onclick="generateShortLink()">Generate Short URL (5 mins)</button>
   <button onclick="copyText()">Copy Code</button>
   <button onclick="copyLink()">Copy Link</button>
+  <button onclick="clearStorage()">Clear Storage</button>
 </div>
 
-<p>Shareable URL:<br>
-  <input id="link" type="text">
+<p>Shareable URL: <br>
+  <input id="shortLink" type="text" readonly onclick="this.select()">
 </p>
+
+<div class="stats">
+  <span class="stat-item"><span class="stat-label">Original Size:</span> <span class="stat-value" id="fileSize">0</span>KB</span>
+  <span class="stat-item"><span class="stat-label">Stored URLs:</span> <span class="stat-value" id="storedCount">0</span></span>
+  <span class="stat-item" id="timerDisplay"></span>
+</div>
 
 <script>
   const textarea = document.getElementById('input');
-  const linkInput = document.getElementById('link');
+  const shortLinkInput = document.getElementById('shortLink');
   const lineCountDiv = document.getElementById('lineCount');
+  const fileSizeSpan = document.getElementById('fileSize');
+  const storedCountSpan = document.getElementById('storedCount');
+  const timerDisplay = document.getElementById('timerDisplay');
+
+  const STORAGE_KEY = 'ctt_transfers';
+  const EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+  // Generate random 6-character ID
+  function generateShortId() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
+
+  // Get stored transfers
+  function getTransfers() {
+    try {
+      const data = localStorage.getItem(STORAGE_KEY);
+      return data ?  JSON.parse(data) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  // Save transfers to storage
+  function saveTransfers(transfers) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(transfers));
+      updateStorageCount();
+    } catch (e) {
+      alert('Storage full! Clear old transfers.');
+    }
+  }
+
+  // Clean expired transfers
+  function cleanExpiredTransfers() {
+    const transfers = getTransfers();
+    const now = Date.now();
+    let cleaned = false;
+
+    for (let id in transfers) {
+      if (now - transfers[id].created > EXPIRY_TIME) {
+        delete transfers[id];
+        cleaned = true;
+      }
+    }
+
+    if (cleaned) {
+      saveTransfers(transfers);
+    }
+  }
+
+  // Update storage count
+  function updateStorageCount() {
+    cleanExpiredTransfers();
+    const transfers = getTransfers();
+    storedCountSpan.textContent = Object.keys(transfers).length;
+  }
 
   function updateLineCount() {
     const lines = textarea.value.split(/\r\n|\r|\n/).length;
-    lineCountDiv.textContent = `Lines: ${lines}`;
+    const sizeKB = (textarea.value.length / 1024).toFixed(2);
+    lineCountDiv.textContent = `Lines: ${lines} | Size: ${sizeKB} KB`;
+    fileSizeSpan.textContent = sizeKB;
   }
 
   textarea.addEventListener('input', updateLineCount);
 
-  function generateLink() {
+  function generateShortLink() {
     if (!textarea.value) {
-      linkInput.value = '';
+      shortLinkInput.value = '';
       return;
     }
-    // Compress text to make URL shorter
-    const compressed = LZString.compressToEncodedURIComponent(textarea.value);
-    const url = `${location.origin}${location.pathname}#${compressed}`;
-    linkInput.value = url;
+
+    cleanExpiredTransfers();
+    const transfers = getTransfers();
+
+    // Generate unique ID
+    let shortId;
+    do {
+      shortId = generateShortId();
+    } while (transfers[shortId]);
+
+    // Store data with expiry time
+    transfers[shortId] = {
+      data: textarea.value,
+      created: Date.now(),
+      expires: Date.now() + EXPIRY_TIME
+    };
+
+    saveTransfers(transfers);
+
+    // Generate short URL
+    const url = `${location.origin}${location.pathname}?id=${shortId}`;
+    shortLinkInput.value = url;
+
+    // Start countdown timer
+    startTimer(shortId, EXPIRY_TIME);
+  }
+
+  function startTimer(shortId, duration) {
+    let remaining = duration;
+    
+    function updateTimer() {
+      const minutes = Math.floor(remaining / 60000);
+      const seconds = Math.floor((remaining % 60000) / 1000);
+      
+      timerDisplay.innerHTML = `<span class="stat-label">Expires in: </span> <span class="stat-value${remaining <= 0 ? ' expired' : ''}" class="timer">${minutes}: ${seconds.toString().padStart(2, '0')}</span>`;
+
+      if (remaining <= 0) {
+        timerDisplay.innerHTML = '<span class="stat-label">Expired: </span> <span class="timer expired">EXPIRED</span>';
+        cleanExpiredTransfers();
+        return;
+      }
+
+      remaining -= 1000;
+      setTimeout(updateTimer, 1000);
+    }
+
+    updateTimer();
   }
 
   function copyText() {
-    navigator.clipboard.writeText(textarea.value);
+    navigator.clipboard. writeText(textarea.value);
     alert("Code copied to clipboard!");
   }
 
   function copyLink() {
-    if (!linkInput.value) {
+    if (! shortLinkInput.value) {
       alert("Generate the URL first!");
       return;
     }
-    navigator.clipboard.writeText(linkInput.value);
+    navigator.clipboard.writeText(shortLinkInput.value);
     alert("Link copied to clipboard!");
   }
 
-  // Load text from URL on page open
-  if (location.hash.length > 1) {
-    try {
-      const decoded = LZString.decompressFromEncodedURIComponent(location.hash.slice(1));
-      textarea.value = decoded || '';
-      updateLineCount();
-    } catch (e) {
-      console.error('Invalid URL data');
+  function clearStorage() {
+    if (confirm('Clear all stored transfers?')) {
+      localStorage.removeItem(STORAGE_KEY);
+      updateStorageCount();
+      alert('Storage cleared!');
     }
   }
 
-  // Initialize line count on page load
+  // Load data from short URL on page open
+  function loadFromShortUrl() {
+    const urlParams = new URLSearchParams(location.search);
+    const id = urlParams.get('id');
+
+    if (id) {
+      cleanExpiredTransfers();
+      const transfers = getTransfers();
+
+      if (transfers[id]) {
+        const transfer = transfers[id];
+        const now = Date.now();
+
+        if (now - transfer.created > EXPIRY_TIME) {
+          alert('Link expired!  (5 minute timeout)');
+          delete transfers[id];
+          saveTransfers(transfers);
+        } else {
+          textarea.value = transfer.data;
+          updateLineCount();
+
+          // Calculate remaining time
+          const remaining = EXPIRY_TIME - (now - transfer.created);
+          startTimer(id, remaining);
+
+          alert('✅ File loaded!  (Link expires in 5 minutes)');
+        }
+      } else {
+        alert('❌ Link not found or expired! ');
+      }
+    }
+  }
+
+  // Initialize
   updateLineCount();
+  updateStorageCount();
+  loadFromShortUrl();
 </script>
 
 </body>
