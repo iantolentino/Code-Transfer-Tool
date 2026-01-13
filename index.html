@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <title>E-Clip</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50%' x='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial, sans-serif' font-size='40' fill='black'>CTT</text></svg>">
+
   <style>
     body {
       margin: 0;
-      padding:  0;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       background-color: #1e1e1e;
       color: #d4d4d4;
@@ -19,7 +19,7 @@
     }
 
     h1 {
-      margin:  20px 0 10px 0;
+      margin: 20px 0 10px;
       color: #61dafb;
       text-align: center;
     }
@@ -32,7 +32,7 @@
       color: #d4d4d4;
       border: 1px solid #333;
       padding: 10px;
-      font-family: 'Fira Code', 'Courier New', monospace;
+      font-family: "Fira Code", monospace;
       font-size: 14px;
       resize: vertical;
       border-radius: 5px;
@@ -44,7 +44,7 @@
       box-shadow: 0 0 5px #61dafb;
     }
 
-    . button-container {
+    .button-container {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
@@ -60,7 +60,6 @@
       border-radius: 5px;
       cursor: pointer;
       font-weight: bold;
-      transition: 0.2s;
     }
 
     button:hover {
@@ -75,31 +74,17 @@
       border: 1px solid #333;
       background-color: #252526;
       color: #61dafb;
-      margin-top: 5px;
-      font-family: 'Fira Code', monospace;
-      font-size:  14px;
-      word-break: break-all;
+      font-family: monospace;
       cursor: pointer;
     }
 
-    #shortLink:hover {
-      background-color: #333;
-    }
-
     #lineCount {
-      margin-top:  5px;
-      font-size:  14px;
-      color:  #aaaaaa;
       width: 100%;
       max-width: 1000px;
       text-align: right;
-    }
-
-    p {
-      width: 100%;
-      max-width: 1000px;
-      word-break: break-word;
-      margin-top: 10px;
+      font-size: 14px;
+      color: #aaa;
+      margin-top: 5px;
     }
 
     .stats {
@@ -111,13 +96,8 @@
       margin-top: 5px;
     }
 
-    . stat-item {
-      display: inline-block;
+    .stat-item {
       margin-right: 20px;
-    }
-
-    .stat-label {
-      color: #666;
     }
 
     .stat-value {
@@ -126,15 +106,14 @@
     }
 
     .timer {
-      display: inline-block;
-      margin-left: 10px;
       padding: 3px 8px;
       background-color: #0e639c;
       border-radius: 3px;
       font-size: 11px;
+      margin-left: 5px;
     }
 
-    .timer. expired {
+    .timer.expired {
       background-color: #ef4444;
     }
 
@@ -145,6 +124,7 @@
     }
   </style>
 </head>
+
 <body>
 
 <h1>E-Clip</h1>
@@ -159,75 +139,56 @@
   <button onclick="clearStorage()">Clear Storage</button>
 </div>
 
-<p>Shareable URL: <br>
-  <input id="shortLink" type="text" readonly onclick="this.select()">
-</p>
+<p>Shareable URL:</p>
+<input id="shortLink" type="text" readonly onclick="this.select()">
 
 <div class="stats">
-  <span class="stat-item"><span class="stat-label">Original Size:</span> <span class="stat-value" id="fileSize">0</span>KB</span>
-  <span class="stat-item"><span class="stat-label">Stored URLs:</span> <span class="stat-value" id="storedCount">0</span></span>
-  <span class="stat-item" id="timerDisplay"></span>
+  <span class="stat-item">Original Size: <span class="stat-value" id="fileSize">0</span> KB</span>
+  <span class="stat-item">Stored URLs: <span class="stat-value" id="storedCount">0</span></span>
+  <span id="timerDisplay"></span>
 </div>
 
 <script>
-  const textarea = document.getElementById('input');
-  const shortLinkInput = document.getElementById('shortLink');
-  const lineCountDiv = document.getElementById('lineCount');
-  const fileSizeSpan = document.getElementById('fileSize');
-  const storedCountSpan = document.getElementById('storedCount');
-  const timerDisplay = document.getElementById('timerDisplay');
+  const textarea = document.getElementById("input");
+  const shortLinkInput = document.getElementById("shortLink");
+  const lineCountDiv = document.getElementById("lineCount");
+  const fileSizeSpan = document.getElementById("fileSize");
+  const storedCountSpan = document.getElementById("storedCount");
+  const timerDisplay = document.getElementById("timerDisplay");
 
-  const STORAGE_KEY = 'ctt_transfers';
-  const EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
+  const STORAGE_KEY = "ctt_transfers";
+  const EXPIRY_TIME = 5 * 60 * 1000;
 
-  // Generate random 6-character ID
   function generateShortId() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
   }
 
-  // Get stored transfers
   function getTransfers() {
-    try {
-      const data = localStorage.getItem(STORAGE_KEY);
-      return data ?  JSON.parse(data) : {};
-    } catch (e) {
-      return {};
-    }
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
   }
 
-  // Save transfers to storage
-  function saveTransfers(transfers) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(transfers));
-      updateStorageCount();
-    } catch (e) {
-      alert('Storage full! Clear old transfers.');
-    }
+  function saveTransfers(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    updateStorageCount();
   }
 
-  // Clean expired transfers
   function cleanExpiredTransfers() {
-    const transfers = getTransfers();
     const now = Date.now();
-    let cleaned = false;
+    const transfers = getTransfers();
+    let changed = false;
 
-    for (let id in transfers) {
-      if (now - transfers[id].created > EXPIRY_TIME) {
+    for (const id in transfers) {
+      if (now > transfers[id].expires) {
         delete transfers[id];
-        cleaned = true;
+        changed = true;
       }
     }
-
-    if (cleaned) {
-      saveTransfers(transfers);
-    }
+    if (changed) saveTransfers(transfers);
   }
 
-  // Update storage count
   function updateStorageCount() {
     cleanExpiredTransfers();
-    const transfers = getTransfers();
-    storedCountSpan.textContent = Object.keys(transfers).length;
+    storedCountSpan.textContent = Object.keys(getTransfers()).length;
   }
 
   function updateLineCount() {
@@ -237,118 +198,81 @@
     fileSizeSpan.textContent = sizeKB;
   }
 
-  textarea.addEventListener('input', updateLineCount);
+  textarea.addEventListener("input", updateLineCount);
 
   function generateShortLink() {
-    if (!textarea.value) {
-      shortLinkInput.value = '';
-      return;
-    }
+    if (!textarea.value) return;
 
     cleanExpiredTransfers();
     const transfers = getTransfers();
 
-    // Generate unique ID
-    let shortId;
+    let id;
     do {
-      shortId = generateShortId();
-    } while (transfers[shortId]);
+      id = generateShortId();
+    } while (transfers[id]);
 
-    // Store data with expiry time
-    transfers[shortId] = {
+    transfers[id] = {
       data: textarea.value,
-      created: Date.now(),
       expires: Date.now() + EXPIRY_TIME
     };
 
     saveTransfers(transfers);
 
-    // Generate short URL
-    const url = `${location.origin}${location.pathname}?id=${shortId}`;
-    shortLinkInput.value = url;
-
-    // Start countdown timer
-    startTimer(shortId, EXPIRY_TIME);
+    shortLinkInput.value = `${location.origin}${location.pathname}?id=${id}`;
+    startTimer(transfers[id].expires);
   }
 
-  function startTimer(shortId, duration) {
-    let remaining = duration;
-    
-    function updateTimer() {
-      const minutes = Math.floor(remaining / 60000);
-      const seconds = Math.floor((remaining % 60000) / 1000);
-      
-      timerDisplay.innerHTML = `<span class="stat-label">Expires in: </span> <span class="stat-value${remaining <= 0 ? ' expired' : ''}" class="timer">${minutes}: ${seconds.toString().padStart(2, '0')}</span>`;
-
+  function startTimer(expiry) {
+    function tick() {
+      const remaining = expiry - Date.now();
       if (remaining <= 0) {
-        timerDisplay.innerHTML = '<span class="stat-label">Expired: </span> <span class="timer expired">EXPIRED</span>';
-        cleanExpiredTransfers();
+        timerDisplay.innerHTML = `<span class="timer expired">EXPIRED</span>`;
         return;
       }
-
-      remaining -= 1000;
-      setTimeout(updateTimer, 1000);
+      const m = Math.floor(remaining / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      timerDisplay.innerHTML = `<span class="timer">${m}:${s.toString().padStart(2, "0")}</span>`;
+      setTimeout(tick, 1000);
     }
-
-    updateTimer();
+    tick();
   }
 
   function copyText() {
-    navigator.clipboard. writeText(textarea.value);
-    alert("Code copied to clipboard!");
+    navigator.clipboard.writeText(textarea.value);
+    alert("Code copied!");
   }
 
   function copyLink() {
-    if (! shortLinkInput.value) {
-      alert("Generate the URL first!");
-      return;
-    }
+    if (!shortLinkInput.value) return alert("Generate a link first");
     navigator.clipboard.writeText(shortLinkInput.value);
-    alert("Link copied to clipboard!");
+    alert("Link copied!");
   }
 
   function clearStorage() {
-    if (confirm('Clear all stored transfers?')) {
+    if (confirm("Clear all stored transfers?")) {
       localStorage.removeItem(STORAGE_KEY);
       updateStorageCount();
-      alert('Storage cleared!');
     }
   }
 
-  // Load data from short URL on page open
   function loadFromShortUrl() {
-    const urlParams = new URLSearchParams(location.search);
-    const id = urlParams.get('id');
+    const id = new URLSearchParams(location.search).get("id");
+    if (!id) return;
 
-    if (id) {
-      cleanExpiredTransfers();
-      const transfers = getTransfers();
+    cleanExpiredTransfers();
+    const transfers = getTransfers();
 
-      if (transfers[id]) {
-        const transfer = transfers[id];
-        const now = Date.now();
-
-        if (now - transfer.created > EXPIRY_TIME) {
-          alert('Link expired!  (5 minute timeout)');
-          delete transfers[id];
-          saveTransfers(transfers);
-        } else {
-          textarea.value = transfer.data;
-          updateLineCount();
-
-          // Calculate remaining time
-          const remaining = EXPIRY_TIME - (now - transfer.created);
-          startTimer(id, remaining);
-
-          alert('✅ File loaded!  (Link expires in 5 minutes)');
-        }
-      } else {
-        alert('❌ Link not found or expired! ');
-      }
+    if (!transfers[id]) {
+      alert("❌ Link not found or expired!");
+      return;
     }
+
+    textarea.value = transfers[id].data;
+    updateLineCount();
+    startTimer(transfers[id].expires);
+    alert("✅ File loaded!");
   }
 
-  // Initialize
   updateLineCount();
   updateStorageCount();
   loadFromShortUrl();
@@ -356,4 +280,3 @@
 
 </body>
 </html>
-
