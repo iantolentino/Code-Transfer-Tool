@@ -4,9 +4,8 @@
   <meta charset="UTF-8">
   <title>Code Transfer Tool</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50%' x='50%' dominant-baseline='middle' text-anchor='middle' font-family='Arial, sans-serif' font-size='40' fill='black'>CTT</text></svg>">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+  <script src="https://cdnjs.cloudflare. com/ajax/libs/lz-string/1.4.4/lz-string. min.js"></script>
   <style>
-    /* Base styling */
     body {
       margin: 0;
       padding: 0;
@@ -46,12 +45,11 @@
       box-shadow: 0 0 5px #61dafb;
     }
 
-    /* Buttons styling */
-    .button-container {
+    . button-container {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      margin: 10px 0;
+      margin:  10px 0;
     }
 
     button {
@@ -70,21 +68,23 @@
       background-color: #1177bb;
     }
 
-    /* Link input styling */
     #link {
       width: 100%;
       max-width: 1000px;
-      padding: 5px;
+      padding: 10px;
       border-radius: 5px;
       border: 1px solid #333;
       background-color: #252526;
-      color: #d4d4d4;
+      color: #61dafb;
       margin-top: 5px;
+      font-family: 'Fira Code', monospace;
+      font-size:  12px;
+      word-break: break-all;
     }
 
     #lineCount {
       margin-top: 5px;
-      font-size: 14px;
+      font-size:  14px;
       color: #aaaaaa;
       width: 100%;
       max-width: 1000px;
@@ -98,7 +98,29 @@
       margin-top: 10px;
     }
 
-    /* Responsive tweaks */
+    .stats {
+      width: 100%;
+      max-width: 1000px;
+      font-size: 12px;
+      color: #888;
+      text-align: right;
+      margin-top: 5px;
+    }
+
+    . stat-item {
+      display: inline-block;
+      margin-right: 20px;
+    }
+
+    .stat-label {
+      color: #666;
+    }
+
+    .stat-value {
+      color: #61dafb;
+      font-weight: bold;
+    }
+
     @media (max-width: 600px) {
       button {
         width: 100%;
@@ -119,40 +141,157 @@
   <button onclick="copyLink()">Copy Link</button>
 </div>
 
-<p>Shareable URL:<br>
-  <input id="link" type="text">
+<p>Shareable URL: <br>
+  <input id="link" type="text" readonly>
 </p>
+
+<div class="stats">
+  <span class="stat-item"><span class="stat-label">Original:</span> <span class="stat-value" id="originalSize">0</span>B</span>
+  <span class="stat-item"><span class="stat-label">Compressed:</span> <span class="stat-value" id="compressedSize">0</span>B</span>
+  <span class="stat-item"><span class="stat-label">Encoded:</span> <span class="stat-value" id="encodedSize">0</span>B</span>
+  <span class="stat-item"><span class="stat-label">Reduction:</span> <span class="stat-value" id="reduction">0</span>%</span>
+</div>
 
 <script>
   const textarea = document.getElementById('input');
   const linkInput = document.getElementById('link');
   const lineCountDiv = document.getElementById('lineCount');
+  const originalSizeSpan = document.getElementById('originalSize');
+  const compressedSizeSpan = document.getElementById('compressedSize');
+  const encodedSizeSpan = document. getElementById('encodedSize');
+  const reductionSpan = document.getElementById('reduction');
+
+  // Base85 charset - alphanumeric only for easy typing
+  const CHARSET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-+. ~: ';
+
+  // Convert bytes to Base85
+  function toBase85(data) {
+    if (data. length === 0) return '';
+    
+    let result = '';
+    let buffer = [];
+
+    for (let i = 0; i < data.length; i++) {
+      buffer.push(data. charCodeAt(i));
+      
+      if (buffer.length === 4) {
+        let num = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
+        
+        for (let j = 4; j >= 0; j--) {
+          result = CHARSET[num % 85] + result;
+          num = Math.floor(num / 85);
+        }
+        buffer = [];
+      }
+    }
+
+    // Handle remaining bytes
+    if (buffer.length > 0) {
+      let num = 0;
+      for (let i = 0; i < buffer. length; i++) {
+        num = (num << 8) | buffer[i];
+      }
+      num = num << (4 - buffer.length) * 8;
+
+      for (let j = 4; j >= 0; j--) {
+        result = CHARSET[num % 85] + result;
+        num = Math.floor(num / 85);
+      }
+    }
+
+    return result;
+  }
+
+  // Convert Base85 back to bytes
+  function fromBase85(encoded) {
+    if (encoded.length === 0) return '';
+    
+    let result = '';
+    let buffer = [];
+
+    for (let i = 0; i < encoded.length; i++) {
+      const val = CHARSET.indexOf(encoded[i]);
+      if (val === -1) throw new Error('Invalid Base85 character');
+      buffer.push(val);
+
+      if (buffer.length === 5) {
+        let num = 0;
+        for (let j = 0; j < 5; j++) {
+          num = num * 85 + buffer[j];
+        }
+
+        for (let j = 3; j >= 0; j--) {
+          result += String.fromCharCode((num >> (j * 8)) & 0xFF);
+        }
+        buffer = [];
+      }
+    }
+
+    // Handle remaining characters
+    if (buffer. length > 0) {
+      let num = 0;
+      for (let j = 0; j < buffer. length; j++) {
+        num = num * 85 + buffer[j];
+      }
+      num = num << (5 - buffer.length) * 8;
+
+      for (let j = buffer.length - 2; j >= 0; j--) {
+        result += String. fromCharCode((num >> (j * 8)) & 0xFF);
+      }
+    }
+
+    return result;
+  }
 
   function updateLineCount() {
     const lines = textarea.value.split(/\r\n|\r|\n/).length;
-    lineCountDiv.textContent = `Lines: ${lines}`;
+    lineCountDiv. textContent = `Lines: ${lines}`;
   }
 
   textarea.addEventListener('input', updateLineCount);
 
   function generateLink() {
-    if (!textarea.value) {
+    if (! textarea.value) {
       linkInput.value = '';
       return;
     }
-    // Compress text to make URL shorter
-    const compressed = LZString.compressToEncodedURIComponent(textarea.value);
-    const url = `${location.origin}${location.pathname}#${compressed}`;
-    linkInput.value = url;
+
+    try {
+      // Step 1: Compress with LZ-String
+      const compressed = LZString.compressToEncodedURIComponent(textarea.value);
+      
+      // Step 2: Encode to Base85
+      const encoded = toBase85(compressed);
+      
+      // Step 3: Generate URL
+      const url = `${location.origin}${location.pathname}#${encoded}`;
+      linkInput.value = url;
+
+      // Update stats
+      const original = textarea.value.length;
+      const lzSize = compressed.length;
+      const b85Size = encoded.length;
+      const urlSize = url.length;
+      const reduction = Math.round((1 - urlSize / (location.origin.length + location.pathname.length + original)) * 100);
+
+      originalSizeSpan.textContent = original;
+      compressedSizeSpan.textContent = lzSize;
+      encodedSizeSpan.textContent = b85Size;
+      reductionSpan.textContent = Math.max(0, reduction);
+
+    } catch (e) {
+      alert('Error encoding:  ' + e.message);
+      console.error(e);
+    }
   }
 
   function copyText() {
-    navigator.clipboard.writeText(textarea.value);
+    navigator.clipboard. writeText(textarea.value);
     alert("Code copied to clipboard!");
   }
 
   function copyLink() {
-    if (!linkInput.value) {
+    if (! linkInput.value) {
       alert("Generate the URL first!");
       return;
     }
@@ -161,17 +300,23 @@
   }
 
   // Load text from URL on page open
-  if (location.hash.length > 1) {
+  if (location.hash. length > 1) {
     try {
-      const decoded = LZString.decompressFromEncodedURIComponent(location.hash.slice(1));
-      textarea.value = decoded || '';
-      updateLineCount();
+      const encoded = location.hash.slice(1);
+      const decompressed = fromBase85(encoded);
+      const decoded = LZString.decompressFromEncodedURIComponent(decompressed);
+      
+      if (decoded) {
+        textarea. value = decoded;
+        updateLineCount();
+      } else {
+        console.error('Failed to decompress data');
+      }
     } catch (e) {
-      console.error('Invalid URL data');
+      console.error('Invalid URL data:', e);
     }
   }
 
-  // Initialize line count on page load
   updateLineCount();
 </script>
 
