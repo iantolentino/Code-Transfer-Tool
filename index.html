@@ -38,8 +38,6 @@ button {
   cursor:pointer;
 }
 
-button:hover { background:#1177bb; }
-
 input {
   width:100%;
   max-width:1000px;
@@ -66,47 +64,78 @@ input {
 <input id="link" readonly onclick="this.select()">
 
 <script>
-/* ================= LZ-STRING (minified) ================= */
-const LZString=function(){function o(o,r){if(!t[o]){t[o]={};for(var n=0;n<o.length;n++)t[o][o.charAt(n)]=n}return t[o][r]}var r=String.fromCharCode,n="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",e="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-$",t={},i={compressToEncodedURIComponent:function(r){return null==r?"":i._compress(r,6,function(r){return e.charAt(r)})},decompressFromEncodedURIComponent:function(r){return null==r?"":""==r?null:i._decompress(r.length,32,function(n){return o(e,r.charAt(n))})},_compress:function(o,r,n){if(null==o)return"";var e,t,i,s={},p={},u="",c="",a="",l=2,f=3,h=2,d=[],m=0,v=0;for(i=0;i<o.length;i+=1)if(u=o.charAt(i),Object.prototype.hasOwnProperty.call(s,u)||(s[u]=f++,p[u]=!0),c=a+u,Object.prototype.hasOwnProperty.call(s,c))a=c;else{if(Object.prototype.hasOwnProperty.call(p,a)){if(a.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==r-1?(v=0,d.push(n(m)),m=0):v++;for(t=a.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==r-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==r-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=a.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==r-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}l--,0==l&&(l=Math.pow(2,h),h++),delete p[a]}else for(t=s[a],e=0;e<h;e++)m=m<<1|1&t,v==r-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;l--,0==l&&(l=Math.pow(2,h),h++),s[c]=f++,a=String(u)}if(""!==a){if(Object.prototype.hasOwnProperty.call(p,a)){if(a.charCodeAt(0)<256){for(e=0;e<h;e++)m<<=1,v==r-1?(v=0,d.push(n(m)),m=0):v++;for(t=a.charCodeAt(0),e=0;e<8;e++)m=m<<1|1&t,v==r-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}else{for(t=1,e=0;e<h;e++)m=m<<1|t,v==r-1?(v=0,d.push(n(m)),m=0):v++,t=0;for(t=a.charCodeAt(0),e=0;e<16;e++)m=m<<1|1&t,v==r-1?(v=0,d.push(n(m)),m=0):v++,t>>=1}l--,0==l&&(l=Math.pow(2,h),h++),delete p[a]}else for(t=s[a],e=0;e<h;e++)m=m<<1|1&t,v==r-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;l--,0==l&&(l=Math.pow(2,h),h++)}for(t=2,e=0;e<h;e++)m=m<<1|1&t,v==r-1?(v=0,d.push(n(m)),m=0):v++,t>>=1;for(;;){if(m<<=1,v==r-1){d.push(n(m));break}v++}return d.join("")},_decompress:function(o,n,e){var t,i,s,p,u,c,a,l,f=[],h=4,d=4,m=3,v="",w=[],A={val:e(0),position:n,index:1};for(i=0;i<3;i+=1)f[i]=i;for(p=0,c=Math.pow(2,2),a=1;a!=c;)u=A.val&A.position,A.position>>=1,0==A.position&&(A.position=n,A.val=e(A.index++)),p|=(u>0?1:0)*a,a<<=1;switch(p){case 0:for(p=0,c=Math.pow(2,8),a=1;a!=c;)u=A.val&A.position,A.position>>=1,0==A.position&&(A.position=n,A.val=e(A.index++)),p|=(u>0?1:0)*a,a<<=1;l=r(p);break;case 1:for(p=0,c=Math.pow(2,16),a=1;a!=c;)u=A.val&A.position,A.position>>=1,0==A.position&&(A.position=n,A.val=e(A.index++)),p|=(u>0?1:0)*a,a<<=1;l=r(p);break;case 2:return""}for(f[3]=l,s=l,w.push(l);;){if(A.index>o)return"";for(p=0,c=Math.pow(2,m),a=1;a!=c;)u=A.val&A.position,A.position>>=1,0==A.position&&(A.position=n,A.val=e(A.index++)),p|=(u>0?1:0)*a,a<<=1;switch(l=p){case 0:for(p=0,c=Math.pow(2,8),a=1;a!=c;)u=A.val&A.position,A.position>>=1,0==A.position&&(A.position=n,A.val=e(A.index++)),p|=(u>0?1:0)*a,a<<=1;f[d++]=r(p),l=d-1,h--;break;case 1:for(p=0,c=Math.pow(2,16),a=1;a!=c;)u=A.val&A.position,A.position>>=1,0==A.position&&(A.position=n,A.val=e(A.index++)),p|=(u>0?1:0)*a,a<<=1;f[d++]=r(p),l=d-1,h--;break;case 2:return w.join("")}if(0==h&&(h=Math.pow(2,m),m++),f[l])v=f[l];else{if(l!==d)return null;v=s+s.charAt(0)}w.push(v),f[d++]=s+v.charAt(0),h--,s=v,0==h&&(h=Math.pow(2,m),m++)}}
-return i}();
-/* ======================================================= */
-
-const EXPIRY = 5 * 60 * 1000;
+const EXPIRY_MS = 5 * 60 * 1000;
 const input = document.getElementById("input");
 const link = document.getElementById("link");
 
-function generate() {
-  if (!input.value) return;
-
-  const payload = {
-    t: Date.now(),
-    d: LZString.compressToEncodedURIComponent(input.value)
-  };
-
-  const encoded = btoa(JSON.stringify(payload));
-  link.value = location.origin + location.pathname + "#e=" + encoded;
+/* ---------- Compression helpers ---------- */
+async function compress(text) {
+  if (!("CompressionStream" in window)) {
+    throw new Error("Compression not supported");
+  }
+  const cs = new CompressionStream("gzip");
+  const writer = cs.writable.getWriter();
+  writer.write(new TextEncoder().encode(text));
+  writer.close();
+  const buffer = await new Response(cs.readable).arrayBuffer();
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)));
 }
 
-function load() {
+async function decompress(base64) {
+  const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  const ds = new DecompressionStream("gzip");
+  const writer = ds.writable.getWriter();
+  writer.write(bytes);
+  writer.close();
+  const buffer = await new Response(ds.readable).arrayBuffer();
+  return new TextDecoder().decode(buffer);
+}
+
+/* ---------- Generate link ---------- */
+async function generate() {
+  if (!input.value) {
+    alert("Paste some text first");
+    return;
+  }
+
+  try {
+    const compressed = await compress(input.value);
+    const payload = {
+      t: Date.now(),
+      d: compressed
+    };
+
+    const encoded = btoa(JSON.stringify(payload));
+    link.value = location.origin + location.pathname + "#e=" + encoded;
+  } catch (err) {
+    alert("Compression not supported in this browser");
+  }
+}
+
+/* ---------- Load from URL ---------- */
+async function load() {
   if (!location.hash.startsWith("#e=")) return;
 
   try {
     const payload = JSON.parse(atob(location.hash.slice(3)));
 
-    if (Date.now() - payload.t > EXPIRY) {
+    if (Date.now() - payload.t > EXPIRY_MS) {
       alert("❌ Link expired");
       return;
     }
 
-    input.value = LZString.decompressFromEncodedURIComponent(payload.d);
-    alert("✅ Text loaded (5-minute link)");
+    input.value = await decompress(payload.d);
+    alert("✅ Text loaded (expires in 5 minutes)");
   } catch {
     alert("❌ Invalid or truncated link");
   }
 }
 
 function copyLink() {
-  if (!link.value) return alert("Generate link first");
+  if (!link.value) {
+    alert("Generate the link first");
+    return;
+  }
   navigator.clipboard.writeText(link.value);
   alert("Link copied");
 }
