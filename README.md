@@ -3,7 +3,7 @@
 A lightweight, **client-side web application** for transferring code snippets across devices via a shareable URL. Designed for developers who need a quick and secure way to move code between machines without creating GitHub commits or triggering notifications.
 
 ---
-
+ 
 ## Features
 
 - **Dark mode UI** optimized for developer workflow  
